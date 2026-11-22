@@ -215,6 +215,8 @@
 }
 
 @media (max-width: 700px) {
+  .game-board__rail { gap: .5rem; padding: .65rem .75rem; }
+
   .game-board {
     --card-width: 4.5rem;
     --card-overlap: 1.65rem;
@@ -244,14 +246,15 @@
   }
 }
 
-.game-controls { display: flex; flex-wrap: wrap; gap: .6rem; padding: 1rem 1.2rem .3rem; }
-.game-controls button { background: #33263f; min-height: 44px; }
+.game-controls { display: flex; gap: .4rem; flex-shrink: 0; }
+.game-controls button { display: grid; place-items: center; width: 44px; height: 44px; padding: .65rem; background: #33263f; }
+.game-controls svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.game-controls button[aria-pressed="false"] { color: #b3a5be; background: transparent; }
+.game-controls button:hover:not(:disabled) { background: #574066; }
 .game-controls button:disabled, .game-controls button[aria-disabled="true"] { opacity: .5; }
-.game-instructions { margin: .7rem 1.2rem; max-width: 80ch; font-size: .85rem; line-height: 1.55; color: #d7cbdc; }
 .game-feedback { padding: .8rem 1.2rem; min-height: 3.2rem; background: #342741; border-block: 1px solid #b394d642; font-size: .9rem; }
 .game-feedback--error { color: #fff0ef; background: #771f2d; border-color: #ff6e75; }
 .game-victory { padding: 1rem; text-align: center; font-size: 1.3rem; color: #fbdc8d; }
-.card-stack__number { margin-bottom: .7rem; font-size: .75rem; color: #d5e6d8; }
 button.playing-card { display: block; padding: 0; text-align: left; }
 button.playing-card:hover { background: #fff8de; border-color: #e1b45f; }
 button.playing-card:focus-visible { outline: 3px solid #ffce6b; outline-offset: -4px; }

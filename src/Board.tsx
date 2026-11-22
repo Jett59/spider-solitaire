@@ -80,15 +80,37 @@ export default function Board() {
     }
   }
   return <section className="game-board" ref={board} tabIndex={-1} onKeyDown={keyDown} aria-labelledby="tableau-heading" aria-describedby="game-instructions">
-    <div className="game-board__rail"><h2 id="tableau-heading">Tableau</h2><span className="game-board__rule" aria-hidden="true" /><span aria-hidden="true">10 columns</span></div>
-    <div className="game-controls">
-      <button ref={dealButton} onClick={dealRow} aria-keyshortcuts={shortcuts ? 'D' : undefined} aria-disabled={deckSize === 0}>Deal{shortcuts ? ' (D)' : ''} · {deckSize / 10} left</button>
-      <button onClick={cancel} disabled={!selection} aria-keyshortcuts="Escape">Cancel move (Esc)</button>
-      <button onClick={() => setSound(!sound)} aria-pressed={sound}>Sound {sound ? 'on' : 'off'}</button>
-      <button onClick={() => setShortcuts(!shortcuts)} aria-pressed={shortcuts}>Shortcuts {shortcuts ? 'on' : 'off'}</button>
+    <div className="game-board__rail">
+      <h2 id="tableau-heading">Tableau</h2>
+      <span className="game-board__rule" aria-hidden="true" />
+      <div className="game-controls" role="group" aria-label="Game controls">
+        <button ref={dealButton} onClick={dealRow} aria-label="Deal cards" aria-describedby="deal-description"
+          title={`Deal cards${shortcuts ? ' (D)' : ''} · ${deckSize / 10} deals left`}
+          aria-keyshortcuts={shortcuts ? 'D' : undefined} aria-disabled={deckSize === 0}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5H3v16h13v-2" /><rect x="7" y="2" width="14" height="15" rx="2" /><path d="M14 6v7m-3-3 3 3 3-3" /></svg>
+        </button>
+        <button onClick={cancel} disabled={!selection} aria-label="Cancel move" aria-describedby="cancel-description"
+          title="Cancel move (Esc)" aria-keyshortcuts="Escape">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 5 14 14M19 5 5 19" /></svg>
+        </button>
+        <button onClick={() => setSound(!sound)} aria-label="Sound effects" aria-describedby="sound-description"
+          title={`Sound ${sound ? 'on' : 'off'}`} aria-pressed={sound}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 4 6 8H2v8h4l5 4Z" />{sound ? <path d="M15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14" /> : <path d="m16 9 6 6m0-6-6 6" />}</svg>
+        </button>
+        <button onClick={() => setShortcuts(!shortcuts)} aria-label="Keyboard shortcuts" aria-describedby="shortcuts-description"
+          title={`Keyboard shortcuts ${shortcuts ? 'on' : 'off'}`} aria-pressed={shortcuts}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2" /><path d="M6 9h.01M10 9h.01M14 9h.01M18 9h.01M6 12h.01M10 12h.01M14 12h.01M18 12h.01M7 15h10" />{!shortcuts && <path d="m3 3 18 18" />}</svg>
+        </button>
+      </div>
     </div>
-    <p id="game-instructions" className="game-instructions">Choose a card, then another column’s top card. Move groups in descending order of the same suit. Tab or arrows to navigate; Enter or Space to choose.{shortcuts && ' 1–9 and 0 choose column tops; D deals.'} Complete a King-to-Ace run to chase away a spider.</p>
-    <div className={`game-feedback ${feedback.error ? 'game-feedback--error' : ''}`}>
+    <div className="sr-only">
+      <span id="deal-description">Deal one card to each column. {deckSize / 10} deals remaining. Fill empty columns before dealing.{shortcuts && ' Shortcut: D.'}</span>
+      <span id="cancel-description">Cancel the selected move. Shortcut: Escape.</span>
+      <span id="sound-description">Turn failure sounds and spider hisses on or off. Sound is {sound ? 'on' : 'off'}.</span>
+      <span id="shortcuts-description">Turn letter and number shortcuts on or off. Shortcuts are {shortcuts ? 'on' : 'off'}. D deals; 1–9 and 0 choose column tops. Tab, arrows, Enter, Space and Escape remain available.</span>
+    </div>
+    <p id="game-instructions" className="sr-only">Choose a card, then another column’s top card. Move groups in descending order of the same suit. Tab or arrows to navigate; Enter or Space to choose.{shortcuts && ' 1–9 and 0 choose column tops; D deals.'} Complete a King-to-Ace run to chase away a spider.</p>
+    <div className={feedback.error ? 'game-feedback game-feedback--error' : 'sr-only'}>
       <div role="alert" aria-atomic="true">{feedback.error && <span key={feedback.id}>⚠ {feedback.text}</span>}</div>
       <div role="status" aria-atomic="true">{!feedback.error && <span key={feedback.id}>{feedback.text}</span>}</div>
     </div>
