@@ -9,7 +9,7 @@ export default function StackView({ stack, column, selectedDepth, moving, onChoo
       aria-label={`Empty column ${column + 1}${moving ? ', move here' : ''}`} onClick={() => onChoose(column, 0)}>Empty</button>}
     {stack.length > 0 && <ol className="card-stack__cards" aria-label={`Cards in column ${column + 1}, ordered from bottom to top`}>{[...stack].reverse().map((card, index) => {
       const depth = stack.length - index
-      return <li className={`card-stack__card ${depth <= selectedDepth ? 'card-stack__card--selected' : ''}`} key={depth}>
+      return <li className={`card-stack__card ${card === '?' ? 'card-stack__card--back' : ''} ${depth <= selectedDepth ? 'card-stack__card--selected' : ''}`} key={depth}>
         <CardView card={card} column={column} depth={depth} selected={depth <= selectedDepth}
           label={`${cardName(card)}, column ${column + 1}, ${depth === 1 ? 'top card' : `${depth} cards to top`}${moving && depth === 1 ? ', move here' : ''}`}
           onClick={() => onChoose(column, depth)} />

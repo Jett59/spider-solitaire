@@ -9,18 +9,13 @@ const SpiderPreview = lazy(() => import('./spider/SpiderPreview'))
 
 function App() {
   const [review, setReview] = useState(false)
-  const { start, started, end } = useGameState()
+  const { start, started } = useGameState()
 
   if (review) return <Suspense fallback={<p>Loading animations…</p>}><AnimationReview onClose={() => setReview(false)} /></Suspense>
 
   if (started) {
     return <main className="game-screen">
-      <header className="game-header">
-        <h1>Spider Solitaire</h1>
-        <button onClick={() => setReview(true)}>Review animations</button>
-        <button onClick={end}>Back to web</button>
-      </header>
-      <Board />
+      <Board onReview={() => setReview(true)} />
     </main>
   }
 

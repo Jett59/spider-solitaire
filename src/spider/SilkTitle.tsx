@@ -1,3 +1,4 @@
+import { useId } from 'react'
 // Hand-drawn single-line letterforms, doubled into strands of silk.
 const letters: Record<string, string> = {
   S: 'M35 9Q12 -1 7 15Q2 28 22 32Q43 36 33 51Q24 65 3 54',
@@ -13,12 +14,13 @@ const letters: Record<string, string> = {
 }
 const title = 'SPIDER SOLITAIRE'
 
-export function SilkTitle() {
-  return <h1 className="silk-title">
+export function SilkTitle({ compact = false, id }: { compact?: boolean; id?: string }) {
+  const shine = useId()
+  return <h1 id={id} className={`silk-title${compact ? ' silk-title--compact' : ''}`}>
     <span className="sr-only">Spider Solitaire</span>
     <svg viewBox="0 0 760 128" aria-hidden="true" fill="none">
       <defs>
-        <linearGradient id="silk-shine" x1="0" y1="0" x2="0" y2="1">
+        <linearGradient id={shine} x1="0" y1="0" x2="0" y2="1">
           <stop stopColor="#fffdf8" /><stop offset="1" stopColor="#c9b8e9" />
         </linearGradient>
       </defs>
@@ -29,7 +31,7 @@ export function SilkTitle() {
       {Array.from(title).map((letter, index) => letter === ' ' ? null :
         <g key={index} transform={`translate(${20 + index * 45} ${36 + Math.sin(index * 2.1) * 3}) rotate(${Math.sin(index) * 3} 20 30)`}>
           <path d={letters[letter]} stroke="#86709e" strokeWidth="3.8" strokeLinecap="round" strokeLinejoin="round" opacity=".4" transform="translate(1 1)" />
-          <path d={letters[letter]} stroke="url(#silk-shine)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          <path d={letters[letter]} stroke={`url(#${shine})`} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
           <path d={letters[letter]} stroke="#fffdf8" strokeWidth=".45" transform="translate(2 -1)" opacity=".65" />
           <path d="M8 5L20 -9L35 8M8 5Q20 4 20 -9Q24 4 35 8" stroke="#c8b7e0" strokeWidth=".55" opacity=".65" />
           {index % 3 === 0 && <path d="M9 30L30 39L9 53M9 37L24 42M9 46L18 45" stroke="#d6c6e9" strokeWidth=".6" opacity=".7" />}

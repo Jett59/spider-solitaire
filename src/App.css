@@ -8,11 +8,10 @@
 }
 .start-options span { color: #c5b6d7; margin-right: 5px; }
 .game-screen { position: fixed; inset: 0; overflow: auto; background: #19172d; }
-.game-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1.25rem 3vw 0; }
-.game-header h1 { margin: 0; font-size: clamp(1.2rem, 3vw, 1.8rem); }
 @media (max-width: 600px) {
   .start-options { bottom: 105px; gap: 5px; padding: 8px; font-size: .75rem; }
 }
 @media (max-height: 500px) {
   .start-options { bottom: 18px; }
 }
+.game-screen { box-sizing: border-box; height: 100dvh; overflow: hidden; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }

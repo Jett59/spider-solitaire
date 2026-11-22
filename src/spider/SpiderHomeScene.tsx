@@ -30,7 +30,7 @@ function Home({ index, alarm, filled, paused, hidden, mood: chosenMood, onMoodCh
   useEffect(() => {
     fitCamera(camera as OrthographicCamera, aspect)
     invalidate()
-  }, [camera, aspect, invalidate])
+  }, [camera, aspect, size.width, size.height, invalidate])
   const keyboardVisit = useMemo(() => visit ? { point: new Vector3(1.5, 1.8, 0), serial: visit } : undefined, [visit])
   return <>
     <hemisphereLight args={['#eee5ff', '#21182e', 1.5]} />
@@ -82,7 +82,7 @@ export default function SpiderHomeScene(props: Props) {
       <button type="button" onClick={() => setVisit(performance.now())} aria-label={'Disturb ' + spiderHomes[props.index].name + ' web'}>Touch web</button>
     </div>}
     <HomeBoundary>
-      <Canvas aria-hidden="true" orthographic camera={{ position: [0, 0, 15], near: .1, far: 40 }} shadows={{ type: PCFShadowMap }} dpr={[1, 1.5]}
+      <Canvas aria-hidden="true" orthographic camera={{ manual: true, left: -4, right: 4, top: 5.3, bottom: -5.3, position: [0, 0, 15], near: .1, far: 40 }} shadows={{ type: PCFShadowMap }} dpr={[1, 1.5]}
         frameloop={paused ? 'demand' : 'always'} gl={{ alpha: true, antialias: true }}>
         <Home {...props} visit={visit} paused={paused} />
       </Canvas>
