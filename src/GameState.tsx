@@ -75,6 +75,7 @@ export function isHigherRank(card1: Card, card2: Card): boolean {
 }
 
 export interface GameStateContext {
+    started: boolean;
     // Top-to-bottom stacks of cards, so the first element is the top card.
     stacks: Array<Array<Card>>;
     completeRuns: Array<Array<Card>>;
@@ -83,21 +84,25 @@ export interface GameStateContext {
     move: (fromStack: number, depth: number, toStack: number) => boolean;
     deal: () => void;
     start: (suits: number) => boolean;
+    end: () => void;
 }
 
 const GameStateContext = createContext<GameStateContext>({
+    started: false,
     stacks: [],
     completeRuns: [],
     deck: [],
     canMove: () => false,
     move: () => false,
     deal: () => { },
-    start: () => false
+    start: () => false,
+    end: () => { },
 });
 
 const INITIAL_STACK_SIZES: number[] = [6, 6, 6, 6, 5, 5, 5, 5, 5, 5];
 
 export function GameStateProvider({ children }: { children: ReactNode }) {
+    const [started, setStarted] = useState<boolean>(false);
     const [stacks, setStacks] = useState<Array<Array<Card>>>([]);
     const [completeRuns, setCompleteRuns] = useState<Array<Array<Card>>>([]);
 
@@ -240,17 +245,28 @@ const deal: () => void = () => {
         
         setRemainingCards(deck);
         setStacks(stacks);
+        setCompleteRuns([]);
+        setStarted(true);
         return true;
     };
 
+const end = () => {
+    setStarted(false);
+    setStacks([]);
+    setCompleteRuns([]);
+    setRemainingCards([]);
+}
+
     return <GameStateContext.Provider value={{
+        started,
         stacks,
         completeRuns,
         deck: Array(deckSize).fill('?' as Card),
         canMove,
         move,
         deal,
-        start
+        start,
+        end
     }}>
         {children}
     </GameStateContext.Provider>
