@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { sharedWebPlan } from './sharedWebPlan'
+import { sharedWebPlan, passingHeights } from './sharedWebPlan'
 import { createSpider } from '../spider/createSpider'
 import { disposeSpiderModel } from '../spider/disposeSpiderModel'
 import { legs, footPosition, solveLeg, UPPER_LEG_LENGTH, LOWER_LEG_LENGTH } from '../spider/spiderGait'
@@ -228,22 +228,30 @@ export function spiderParty(canvas: HTMLCanvasElement, remaining: number[], home
     const start = s.point(home ? home.x + home.width / 2 : s.width / 2,
       home ? clamp(home.y + home.height / 2, 75, s.height - 75) : s.height * .8)
     spider.root.scale.setScalar(size); s.scene.add(spider.root)
-    const waypoints = [start, ...plan.routes[order].map(node => nodes[node])]
+    const waypoints = [start, ...plan.routes[order].map(step => nodes[step.node])]
     let cursor = order * .12
     const jobs = waypoints.slice(1).map((to, job) => {
       const from = waypoints[job]
       const run = Math.max(.65, from.distanceTo(to) / (120 + Math.random() * 70))
-      const tend = .4 + Math.random() * .45
-      const result = { from, to, begin: cursor, run, tend, line: strand() }
+      const weave = plan.routes[order][job].weave
+      const tend = weave ? .25 + Math.random() * .2 : .05
+      const result = { from, to, begin: cursor, run, tend, weave, line: strand() }
       cursor += run + tend
       return result
     })
     return { ...spider, index, order, size, start, jobs, end: cursor, live: strand(), yaw: 0 }
   })
-  const duration = Math.max(0, ...spiders.map(spider => spider.end)) + 1
+  const completedAt = Math.max(0, ...spiders.map(spider => spider.end))
+  const duration = completedAt + 5
   return {
     duration,
     frame(time) {
+      const positions = spiders.map(spider => {
+        const job = spider.jobs.find(job => time < job.begin + job.run + job.tend) ?? spider.jobs[spider.jobs.length - 1]
+        const position = job.from.clone().lerp(job.to, smooth((time - job.begin) / job.run))
+        return { x: position.x, y: position.y, size: spider.size }
+      })
+      const heights = passingHeights(positions)
       spiders.forEach(spider => {
         const current = spider.jobs.findIndex(job => time < job.begin + job.run + job.tend)
         const job = spider.jobs[current < 0 ? spider.jobs.length - 1 : current]
@@ -254,23 +262,26 @@ export function spiderParty(canvas: HTMLCanvasElement, remaining: number[], home
         const turn = Math.atan2(Math.sin(heading - spider.yaw), Math.cos(heading - spider.yaw))
         spider.yaw += turn * .2
         spider.root.position.copy(job.from).lerp(job.to, progress)
-        spider.root.position.z = spider.size * .8
+        const celebrating = time >= completedAt
+        const jump = celebrating ? Math.max(0, Math.sin((time - completedAt) * 5)) : 0
+        spider.root.position.z = spider.size * (.8 + jump * 2.5) + heights[spider.order]
         spider.root.rotation.z = spider.yaw
         const working = current >= 0 && time >= job.begin
         spider.mixer.setTime(time * (tending || !working ? .5 : 5))
-        rearUp(spider, tending && working ? .18 + Math.sin(time * 11 + spider.index) ** 2 * .2 : 0, time)
+        rearUp(spider, celebrating ? .5 + jump * .25 : tending && working ? .18 + Math.sin(time * 11 + spider.index) ** 2 * .2 : 0, time)
         spider.root.updateMatrixWorld(true)
         // Silk streams from the spinnerets, then anchors and tightens at the join.
         const spinner = spider.root.localToWorld(new THREE.Vector3(0, .9, -.3))
         spider.jobs.forEach((finished, j) => {
-          if (time >= finished.begin + finished.run) {
+          if (finished.weave && time >= finished.begin + finished.run) {
             const tightening = 1 - smooth((time - finished.begin - finished.run) / finished.tend)
-            stretch(finished.line, finished.from, finished.to, .3 + tightening * .7, time)
+            stretch(finished.line, finished.from, finished.to, tightening, time)
           } else if (j !== current) finished.line.visible = false
         })
-        spider.live.visible = working && !tending && local > 0
+        spider.live.visible = job.weave && working && !tending && local > 0
         if (spider.live.visible) stretch(spider.live, job.from, spinner, 1, time)
-        if (tending && working) cue('web-join-' + spider.index + '-' + current, 'spider')
+        if (celebrating) cue('web-complete', 'spider')
+        if (job.weave && tending && working) cue('web-join-' + spider.index + '-' + current, 'spider')
       })
       s.renderer.render(s.scene, s.camera)
     },

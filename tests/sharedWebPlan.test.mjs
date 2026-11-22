@@ -1,27 +1,37 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { sharedWebPlan } from '../src/animation/sharedWebPlan.ts'
+import { sharedWebPlan, passingHeights } from '../src/animation/sharedWebPlan.ts'
 
-test('all surviving spiders weave one connected web from shared junctions', () => {
-  for (const residents of [1, 3, 8]) {
-    let seed=17
-    const {nodes,routes}=sharedWebPlan(residents,()=>{seed=(seed*1664525+1013904223)>>>0;return seed/2**32})
-    assert.equal(routes.length,residents)
-    const graph=new Map()
+test('every radial and ring strand is woven exactly once for every survivor count', () => {
+  for (let residents = 1; residents <= 8; residents++) {
+    const {nodes,routes}=sharedWebPlan(residents,()=>.5)
+    const strands=new Set(), junctions=new Set()
+    const parks=new Set()
     for(const route of routes) {
-      assert.equal(route[0],0)
-      assert.ok(route.every(id=>id>=0&&id<nodes.length))
+      parks.add(route.at(-1).node)
+      assert.equal(route[0].node,route.at(-1).node)
       for(let i=1;i<route.length;i++) {
-        assert.notEqual(route[i],route[i-1])
-        for(const [a,b] of [[route[i-1],route[i]],[route[i],route[i-1]]]) {
-          if(!graph.has(a))graph.set(a,new Set())
-          graph.get(a).add(b)
-        }
+        const a=route[i-1].node,b=route[i].node
+        assert.notEqual(a,b)
+        const key=[a,b].sort((a,b)=>a-b).join(':')
+        if(route[i].weave) {
+          assert.ok(!strands.has(key),`duplicate ${key}`)
+          strands.add(key); junctions.add(a); junctions.add(b)
+        } else assert.ok(strands.has(key),'travel uses an existing strand')
       }
     }
-    const visited=new Set([0]), queue=[0]
-    for(const node of queue) for(const neighbor of graph.get(node)??[]) if(!visited.has(neighbor)){visited.add(neighbor);queue.push(neighbor)}
-    assert.equal(visited.size,graph.size)
-    assert.ok(nodes.every(node=>Math.hypot(node.x,node.y)<=1.001))
+    assert.equal(parks.size,residents)
+    assert.equal(strands.size,72)
+    assert.equal(junctions.size,nodes.length)
   }
+})
+
+test('passing spiders have leg clearance even when several meet at a junction', () => {
+  const positions=[{x:0,y:0,size:10},{x:15,y:0,size:10},{x:0,y:0,size:12}]
+  const heights=passingHeights(positions)
+  for(let i=0;i<positions.length;i++) for(let j=0;j<i;j++) {
+    const a=positions[i],b=positions[j]
+    assert.ok(Math.hypot(a.x-b.x,a.y-b.y,heights[i]-heights[j])+1e-8 >= (a.size+b.size)*3.2)
+  }
+  assert.deepEqual(passingHeights([{x:0,y:0,size:10},{x:100,y:0,size:10}]),[0,0])
 })
