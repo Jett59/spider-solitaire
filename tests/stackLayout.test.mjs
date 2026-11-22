@@ -1,14 +1,36 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { stackSpacing } from '../src/stackLayout.ts'
+import { fitTable } from '../src/stackLayout.ts'
 
-test('long iPad columns compress into the available table height',()=>{
-  const {face,back}=stackSpacing(480,110,16,4)
-  assert.ok(face>=22)
-  assert.ok(110+15*face+4*back<=480)
+test('homes move below the viewport before cards shrink', () => {
+  const layout = fitTable(600, 150, 12, 230)
+  assert.equal(layout.scale, 1)
+  assert.ok(layout.hiddenHomes > 0)
+  assert.ok(layout.hiddenHomes < 230)
 })
-test('exceptional stacks keep ranks readable and scroll within the table',()=>{
-  assert.equal(stackSpacing(250,100,35,4).face,22)
-  assert.equal(stackSpacing(600,100,4,2).face,36)
-  assert.ok(Number.isFinite(stackSpacing(100,100,0,0).face))
+test('a stack taller than the screen scales as a whole after homes leave', () => {
+  const layout = fitTable(480, 150, 15, 230)
+  assert.equal(layout.hiddenHomes, 230)
+  assert.ok(layout.scale < 1)
+  const naturalHeight = 150 + 14 * (150 / 1.42 * .34)
+  assert.ok(Math.abs(naturalHeight * layout.scale - 480) < .001)
+})
+test('short stacks keep full size and all homes visible', () => {
+  assert.deepEqual(fitTable(900, 150, 6, 230), { scale: 1, hiddenHomes: 0, height: 830 })
+})
+test('exceptional stacks retain a readable size and scroll', () => {
+  assert.equal(fitTable(200, 150, 50, 230).scale, .6)
+})
+
+test('tall screens cap spare felt while leaving room for growing stacks', () => {
+  const short = fitTable(1600, 150, 6, 230)
+  const long = fitTable(1600, 150, 18, 230)
+  assert.equal(short.height, 830)
+  assert.ok(long.height > short.height)
+  assert.ok(long.height < 1600)
+  assert.equal(long.scale, 1)
+  assert.equal(long.hiddenHomes, 0)
+})
+test('limited screens still use all their available height', () => {
+  assert.equal(fitTable(480, 150, 15, 230).height, 480)
 })

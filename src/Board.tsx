@@ -3,7 +3,7 @@ import { useGameState } from './gameContext'
 import { cardName, selectionProblem } from './gameRules'
 import { playGameSound } from './gameAudio'
 import { SilkTitle } from './spider/SilkTitle'
-import { stackSpacing } from './stackLayout'
+import { fitTable } from './stackLayout'
 import Stack from './Stack'
 import CompletedRuns from './CompletedRuns'
 import './GameTable.css'
@@ -28,17 +28,27 @@ export default function Board({ onReview }: { onReview?: () => void }) {
     const fit = () => {
       const card = element.querySelector<HTMLElement>('.card-stack .playing-card, .card-stack__empty')
       if (!card) return
-      const height = card.getBoundingClientRect().height
+      // offsetHeight stays unscaled, so repeated resize observations cannot
+      // progressively shrink the cards.
+      const height = card.offsetHeight
       const rail = element.querySelector<HTMLElement>('.game-board__rail')!
       const homes = element.querySelector<HTMLElement>('.completed-runs')!
-      const available = element.parentElement!.clientHeight - rail.offsetHeight - homes.offsetHeight - 16
-      element.querySelectorAll<HTMLElement>('.card-stack').forEach((column, index) => {
-        const cards = stacks[index]
-        const down = cards.filter(card => card === '?').length
-        const spacing = stackSpacing(available, height, cards.length - down, down)
-        column.style.setProperty('--stack-overlap', `${spacing.face}px`)
-        column.style.setProperty('--back-overlap', `${spacing.back}px`)
-      })
+      const felt = element.querySelector<HTMLElement>('.game-board__felt')!
+      const feltStyle = getComputedStyle(felt)
+      const padding = parseFloat(feltStyle.paddingTop) + parseFloat(feltStyle.paddingBottom)
+      const messages = Array.from(element.children).filter(child =>
+        child.classList.contains('game-feedback') || child.classList.contains('game-outcome'))
+      const messageHeight = messages.reduce((total, child) => {
+        const style = getComputedStyle(child)
+        return total + child.getBoundingClientRect().height + parseFloat(style.marginTop) + parseFloat(style.marginBottom)
+      }, 0)
+      const overhead = rail.offsetHeight + messageHeight + padding
+      const available = element.parentElement!.clientHeight - overhead
+      const layout = fitTable(available, height, Math.max(1, ...stacks.map(cards => cards.length)), homes.offsetHeight)
+      element.style.height = `${layout.height + overhead}px`
+      element.style.marginTop = `${Math.min(24, Math.max(0, available - layout.height) / 2)}px`
+      element.style.setProperty('--card-scale', String(layout.scale))
+      homes.style.marginBottom = `${-layout.hiddenHomes}px`
     }
     const observer = new ResizeObserver(fit)
     observer.observe(area)
@@ -46,7 +56,7 @@ export default function Board({ onReview }: { onReview?: () => void }) {
     observer.observe(element.querySelector('.completed-runs')!)
     fit()
     return () => observer.disconnect()
-  }, [stacks])
+  }, [stacks, feedback.error, shows.outcome])
   function report(text: string, error = false) {
     setFeedback(previous => ({ text, error, id: previous.id + 1 }))
     if (error && sound) playGameSound('failure')
@@ -132,10 +142,10 @@ export default function Board({ onReview }: { onReview?: () => void }) {
       <SilkTitle compact id="tableau-heading" />
       <span className="game-board__rule" aria-hidden="true" />
       <div className="game-controls" role="group" aria-label="Game controls">
-        <button ref={dealButton} onClick={dealRow} aria-label="Deal cards" aria-describedby="deal-description"
+        <button className="game-controls__deal" ref={dealButton} onClick={dealRow} aria-label="Deal cards" aria-describedby="deal-description"
           title={`Deal cards${shortcuts ? ' (D)' : ''} · ${deckSize / 10} deals left`}
           aria-keyshortcuts={shortcuts ? 'D' : undefined} aria-disabled={deckSize === 0}>
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5H3v16h13v-2" /><rect x="7" y="2" width="14" height="15" rx="2" /><path d="M14 6v7m-3-3 3 3 3-3" /></svg>
+          Deal
         </button>
         <button onClick={undoLastTurn} aria-disabled={!canUndo} aria-label="Undo last action" aria-describedby="undo-description"
           title="Undo last action (Ctrl/Cmd+Z)" aria-keyshortcuts="Control+Z Meta+Z">
