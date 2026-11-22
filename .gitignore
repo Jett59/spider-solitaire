@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local browser verification and icon previews
+.playwright-cli/
+/output/playwright/

@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none">
+  <title>Spider Solitaire</title>
+  <rect x="4" y="4" width="248" height="248" rx="56" fill="#19172D"/>
+  <!-- Eight spokes and bowed silk strands keep the web soft and organic. -->
+  <g stroke="#B9B3D8" stroke-width="3" stroke-linecap="round" opacity=".6">
+    <path d="M128 14v228M14 128h228M38 38l180 180M218 38 38 218"/>
+    <path d="M128 28Q146 61 199 57Q195 105 228 128Q195 147 199 199Q148 195 128 228Q105 195 57 199Q61 148 28 128Q61 105 57 57Q106 61 128 28Z"/>
+    <path d="M128 58Q143 82 177 79Q174 113 198 128Q174 144 177 177Q143 174 128 198Q112 174 79 177Q82 143 58 128Q82 112 79 79Q113 82 128 58Z"/>
+  </g>
+  <!-- Four legs on each side, with round knees and feet. -->
+  <g stroke="#0E0C1C" stroke-width="19" stroke-linecap="round" stroke-linejoin="round">
+    <path d="m91 113-22-19-4-20m25 57-35-7-12-16m49 39-35 10-12 21m53-18-23 28 1 21"/>
+    <path d="m165 113 22-19 4-20m-25 57 35-7 12-16m-49 39 35 10 12 21m-53-18 23 28-1 21"/>
+  </g>
+  <g stroke="#9B78EE" stroke-width="11" stroke-linecap="round" stroke-linejoin="round">
+    <path d="m91 113-22-19-4-20m25 57-35-7-12-16m49 39-35 10-12 21m53-18-23 28 1 21"/>
+    <path d="m165 113 22-19 4-20m-25 57 35-7 12-16m-49 39 35 10 12 21m-53-18 23 28-1 21"/>
+  </g>
+  <ellipse cx="128" cy="119" rx="53" ry="58" fill="#B18AFF" stroke="#0E0C1C" stroke-width="5"/>
+  <path d="M94 102c3-16 15-27 29-29" stroke="#D7C0FF" stroke-width="8" stroke-linecap="round"/>
+  <ellipse cx="128" cy="155" rx="42" ry="35" fill="#8960DB" stroke="#0E0C1C" stroke-width="5"/>
+  <ellipse cx="112" cy="149" rx="12" ry="15" fill="#FFF9E9"/>
+  <ellipse cx="144" cy="149" rx="12" ry="15" fill="#FFF9E9"/>
+  <ellipse cx="115" cy="152" rx="5" ry="8" fill="#19172D"/>
+  <ellipse cx="141" cy="152" rx="5" ry="8" fill="#19172D"/>
+  <path d="M120 174q8 7 16 0" stroke="#25163F" stroke-width="4" stroke-linecap="round"/>
+</svg>

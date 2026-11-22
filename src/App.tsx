@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
+import spiderIcon from './assets/spider.svg'
 import './App.css'
 
 function App() {
@@ -8,9 +8,7 @@ function App() {
   return (
     <>
       <div>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+        <img src={spiderIcon} className="logo" alt="A round purple spider sitting on its web" />
       </div>
       <h1>Spider Solitaire!</h1>
       <div className="card">
@@ -21,9 +19,6 @@ function App() {
           Edit <code>src/App.tsx</code> and save to test HMR
         </p>
       </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
     </>
   )
 }
