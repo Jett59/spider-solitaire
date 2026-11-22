@@ -11,7 +11,7 @@ import './animation/GameShow.css'
 import { useGameShows } from './animation/useGameShows'
 const GameShow = lazy(() => import('./animation/GameShow'))
 
-export default function Board({ onReview }: { onReview?: () => void }) {
+export default function Board({ onReview, residentsReady = true }: { onReview?: () => void; residentsReady?: boolean }) {
   const game = useGameState()
   const { stacks, completeRuns, deckSize, move, deal, canUndo, undo, end } = game
   const shows = useGameShows(game)
@@ -195,7 +195,7 @@ export default function Board({ onReview }: { onReview?: () => void }) {
       {stacks.map((stack, column) => <Stack key={column} stack={stack} column={column} moving={!!selection}
         selectedDepth={selection?.column === column ? selection.depth : 0} onChoose={choose} />)}
     </ol></div>
-    <CompletedRuns cardsGone={shows.cardsGone} runs={shows.homeRuns} stacks={stacks}
+    <CompletedRuns residentsReady={residentsReady} cardsGone={shows.cardsGone} runs={shows.homeRuns} stacks={stacks}
       escaped={shows.outcome === 'lost' && shows.active?.kind !== 'battle'}
       hiddenResidents={shows.active?.kind === 'battle' ? [shows.active.battle!.slot] : shows.outcome === 'lost' ? shows.remaining : []} />
     {shows.active && <Suspense fallback={<button onClick={finishShow}>Skip animation</button>}>

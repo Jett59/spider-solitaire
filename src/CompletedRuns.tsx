@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState, useLayoutEffect, type CSSProperties } from 'react'
+import { lazy, Suspense, useState, useRef, useEffect, useLayoutEffect, type CSSProperties } from 'react'
 import { cardName, type Card } from './gameRules'
 import { spiderHomes, threatenedHomes } from './spider/spiderHomes'
 import { columnLocations, homeLocations } from './spider/homeLayout'
@@ -7,8 +7,18 @@ import CardView from './Card'
 
 const SpiderHomeScene = lazy(() => import('./spider/SpiderHomeScene'))
 
-export default function CompletedRuns({ runs, stacks, hiddenResidents = [], escaped = false, cardsGone = false }: { runs: (Card[] | undefined)[], stacks: Card[][], hiddenResidents?: number[], escaped?: boolean, cardsGone?: boolean }) {
+export default function CompletedRuns({ runs, stacks, hiddenResidents = [], escaped = false, cardsGone = false, residentsReady = true }: { runs: (Card[] | undefined)[], stacks: Card[][], hiddenResidents?: number[], escaped?: boolean, cardsGone?: boolean; residentsReady?: boolean }) {
   const [moods, setMoods] = useState<SpiderTemperament[]>(() => spiderHomes.map(home => home.mood === 'calm' ? 'Calm' : home.mood === 'grumpy' ? 'Grumpy' : 'Curious'))
+  const staggerResidents = useRef(!residentsReady)
+  const [residentCount, setResidentCount] = useState(residentsReady ? spiderHomes.length : 0)
+  useEffect(() => {
+    if (!residentsReady || !staggerResidents.current) return
+    // Spread WebGL setup across separate frames, after the page transition.
+    const timers = spiderHomes.map((_, index) => window.setTimeout(() => {
+      setResidentCount(index + 1)
+    }, index * 90))
+    return () => timers.forEach(window.clearTimeout)
+  }, [residentsReady])
   const [threats, setThreats] = useState<{ index: number; panic: boolean }[]>([])
   useLayoutEffect(() => {
     const update = () => {
@@ -36,7 +46,7 @@ export default function CompletedRuns({ runs, stacks, hiddenResidents = [], esca
           className={`completion-slot completion-slot--${spider.mood} ${filled ? 'completion-slot--filled' : nervous ? `completion-slot--nervous${threat.panic ? ' completion-slot--panic' : ''}` : 'completion-slot--settled'}`}
           style={{ '--spider-colour': spider.colour } as CSSProperties}
           role="group" aria-label={`${spider.name}’s web, slot ${index + 1}. ${filled ? `Completed ${cardName(runs[index]![12])} to Ace; ${spider.name} has fled.` : escaped ? `${spider.name} has left the web to celebrate.` : nervous ? `${spider.name} is ${state}: a nearby stack is close to completion.` : `${moods[index]} spider, resting, exploring and tending the silk.`}`}>
-          {!filled && !escaped && <div className="completion-slot__habitat">
+          {!filled && !escaped && residentsReady && index < residentCount && <div className="completion-slot__habitat">
             <Suspense fallback={<span className="home-scene-fallback">Spinning silk…</span>}>
               <SpiderHomeScene mood={moods[index]} onMoodChange={() => setMoods(current => current.map((mood, slot) => slot === index ? mood === 'Calm' ? 'Curious' : mood === 'Curious' ? 'Grumpy' : 'Calm' : mood))} index={index} alarm={nervous ? threat.panic ? 2 : 1 : 0} filled={filled} hidden={filled || hiddenResidents.includes(index)} />
             </Suspense>

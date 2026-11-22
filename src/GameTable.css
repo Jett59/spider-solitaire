@@ -348,3 +348,8 @@ button.playing-card:focus-visible { outline: 3px solid #ffce6b; outline-offset: 
   .game-screen > .game-board .completion-slot { min-height: 70px; height: auto; }
   .game-screen > .game-board .completion-slot__caption small { display: none; }
 }
+
+@media (prefers-reduced-motion: no-preference) {
+  .completion-slot__habitat { animation: resident-arrive 240ms ease-out both; }
+  @keyframes resident-arrive { from { opacity: 0; } to { opacity: 1; } }
+}
