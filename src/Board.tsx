@@ -7,7 +7,7 @@ import CompletedRuns from './CompletedRuns'
 import './GameTable.css'
 
 export default function Board() {
-  const { stacks, completeRuns, deckSize, move, deal } = useGameState()
+  const { stacks, completeRuns, deckSize, move, deal, canUndo, undo } = useGameState()
   const [selection, setSelection] = useState<{ column: number, depth: number } | null>(null)
   const [feedback, setFeedback] = useState({ text: 'Choose a face-up card to move.', error: false, id: 0 })
   const [sound, setSound] = useState(true)
@@ -57,7 +57,19 @@ export default function Board() {
     setSelection(null)
     report('Dealt one card to each column.')
   }
+  function undoLastTurn() {
+    if (!canUndo) return
+    undo()
+    setSelection(null)
+    report('Last action undone. Cards and completed stacks restored.')
+    requestAnimationFrame(() => board.current?.querySelector<HTMLButtonElement>('[aria-label="Undo last action"]')?.focus())
+  }
   function keyDown(event: KeyboardEvent<HTMLElement>) {
+    if ((event.ctrlKey || event.metaKey) && !event.altKey && !event.shiftKey && event.key.toLowerCase() === 'z') {
+      event.preventDefault()
+      if (!event.repeat) undoLastTurn()
+      return
+    }
     if (event.altKey || event.ctrlKey || event.metaKey || event.repeat) return
     const target = event.target as HTMLElement
     if (event.key === 'Escape' && selection) { event.preventDefault(); cancel(); return }
@@ -89,6 +101,10 @@ export default function Board() {
           aria-keyshortcuts={shortcuts ? 'D' : undefined} aria-disabled={deckSize === 0}>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5H3v16h13v-2" /><rect x="7" y="2" width="14" height="15" rx="2" /><path d="M14 6v7m-3-3 3 3 3-3" /></svg>
         </button>
+        <button onClick={undoLastTurn} aria-disabled={!canUndo} aria-label="Undo last action" aria-describedby="undo-description"
+          title="Undo last action (Ctrl/Cmd+Z)" aria-keyshortcuts="Control+Z Meta+Z">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5 4 10l5 5M4 10h10a6 6 0 0 1 0 12" transform="translate(0 -2)" /></svg>
+        </button>
         <button onClick={cancel} disabled={!selection} aria-label="Cancel move" aria-describedby="cancel-description"
           title="Cancel move (Esc)" aria-keyshortcuts="Escape">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 5 14 14M19 5 5 19" /></svg>
@@ -105,6 +121,7 @@ export default function Board() {
     </div>
     <div className="sr-only">
       <span id="deal-description">Deal one card to each column. {deckSize / 10} deals remaining. Fill empty columns before dealing.{shortcuts && ' Shortcut: D.'}</span>
+      <span id="undo-description">Undo the most recent move or deal, including revealed cards and completed stacks. Shortcut: Control+Z or Command+Z. {canUndo ? 'Undo is available.' : 'Nothing to undo.'}</span>
       <span id="cancel-description">Cancel the selected move. Shortcut: Escape.</span>
       <span id="sound-description">Turn failure sounds and spider hisses on or off. Sound is {sound ? 'on' : 'off'}.</span>
       <span id="shortcuts-description">Turn letter and number shortcuts on or off. Shortcuts are {shortcuts ? 'on' : 'off'}. D deals; 1–9 and 0 choose column tops. Tab, arrows, Enter, Space and Escape remain available.</span>
@@ -115,7 +132,7 @@ export default function Board() {
       <div role="status" aria-atomic="true">{!feedback.error && <span key={feedback.id}>{feedback.text}</span>}</div>
     </div>
     <p className={completeRuns.length === 8 ? 'game-victory' : 'sr-only'} role="status" aria-atomic="true">
-      {completeRuns.length === 8 ? 'You won! All eight stacks complete. Every spider has fled.' : completeRuns.length > 0 ? `${completeRuns.length} of 8 stacks complete. A spider hisses and runs away!` : ''}
+      {completeRuns.length === 8 ? 'You won! All eight stacks complete. Every spider has fled.' : completeRuns.length > 0 ? `${completeRuns.length} of 8 stacks complete.` : ''}
     </p>
     <div className="game-board__scroll"><ol className="game-board__felt" aria-label="Tableau columns">
       {stacks.map((stack, column) => <Stack key={column} stack={stack} column={column} moving={!!selection}

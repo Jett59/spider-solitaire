@@ -2,6 +2,8 @@ import { useContext, createContext } from 'react'
 import type { Game } from './gameRules'
 
 export interface GameStateContext extends Game {
+  canUndo: boolean
+  undo: () => void
   deckSize: number
   move: (from: number, depth: number, to: number) => string | null
   deal: () => string | null
