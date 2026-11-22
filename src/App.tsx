@@ -1,7 +1,7 @@
 import { lazy, Suspense } from 'react'
 import './App.css'
 import Board from './Board'
-import { useGameState } from './GameState'
+import { useGameState } from './gameContext'
 
 const SpiderPreview = lazy(() => import('./spider/SpiderPreview'))
 
