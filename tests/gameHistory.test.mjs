@@ -9,6 +9,7 @@ test('undo restores a completed run, revealed card, and hidden-card pool exactly
   const history = { game, past: [] }
   const moved = rememberTurn(history, moveCards(game, 0, 1, 1))
   assert.equal(moved.game.completeRuns.length, 1)
+  assert.deepEqual(moved.game.completeRunColumns, [1])
   assert.deepEqual(moved.game.stacks, [['h2'], ['h3']])
   assert.deepEqual(undoTurn(moved), history)
 })

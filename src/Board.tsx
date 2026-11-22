@@ -1,25 +1,25 @@
-import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState, type KeyboardEvent } from 'react'
 import { useGameState } from './gameContext'
 import { cardName, selectionProblem } from './gameRules'
 import { playGameSound } from './gameAudio'
 import Stack from './Stack'
 import CompletedRuns from './CompletedRuns'
 import './GameTable.css'
+import './animation/GameShow.css'
+import { useGameShows } from './animation/useGameShows'
+const GameShow = lazy(() => import('./animation/GameShow'))
 
 export default function Board() {
-  const { stacks, completeRuns, deckSize, move, deal, canUndo, undo } = useGameState()
+  const game = useGameState()
+  const { stacks, completeRuns, deckSize, move, deal, canUndo, undo, end } = game
+  const shows = useGameShows(game)
   const [selection, setSelection] = useState<{ column: number, depth: number } | null>(null)
   const [feedback, setFeedback] = useState({ text: 'Choose a face-up card to move.', error: false, id: 0 })
   const [sound, setSound] = useState(true)
   const [shortcuts, setShortcuts] = useState(true)
   const board = useRef<HTMLElement>(null)
   const dealButton = useRef<HTMLButtonElement>(null)
-  const completedCount = useRef(completeRuns.length)
   useEffect(() => { board.current?.focus({ preventScroll: true }) }, [])
-  useEffect(() => {
-    if (completeRuns.length > completedCount.current && sound) playGameSound('hiss')
-    completedCount.current = completeRuns.length
-  }, [completeRuns.length, sound])
   function report(text: string, error = false) {
     setFeedback(previous => ({ text, error, id: previous.id + 1 }))
     if (error && sound) playGameSound('failure')
@@ -36,8 +36,10 @@ export default function Board() {
     report('Move cancelled. Choose a face-up card.')
   }
   function choose(column: number, depth: number) {
+    if (shows.active || shows.outcome) return
     if (selection && selection.column !== column) {
       if (depth > 1) { report('Choose the top card of the destination column.', true); return }
+      shows.capture([column, selection.column])
       const problem = move(selection.column, selection.depth, column)
       if (problem) { report(problem, true); return }
       setSelection(null)
@@ -52,6 +54,8 @@ export default function Board() {
     report(`${cardName(stacks[column][depth - 1])}${depth > 1 ? ` and ${depth - 1} ${depth === 2 ? 'card' : 'cards'}` : ''} selected. Choose another column’s top card or an empty column.`)
   }
   function dealRow() {
+    if (shows.active || shows.outcome) return
+    shows.capture()
     const problem = deal()
     if (problem) { report(problem, true); return }
     setSelection(null)
@@ -59,6 +63,7 @@ export default function Board() {
   }
   function undoLastTurn() {
     if (!canUndo) return
+    shows.cancel()
     undo()
     setSelection(null)
     report('Last action undone. Cards and completed stacks restored.')
@@ -90,6 +95,10 @@ export default function Board() {
       event.preventDefault()
       board.current?.querySelector<HTMLButtonElement>(`button[data-column="${column}"][data-depth="${depth + (event.key === 'ArrowUp' ? 1 : -1)}"]`)?.focus()
     }
+  }
+  function finishShow() {
+    shows.finish()
+    requestAnimationFrame(() => board.current?.focus({ preventScroll: true }))
   }
   return <section className="game-board" ref={board} tabIndex={-1} onKeyDown={keyDown} aria-labelledby="tableau-heading" aria-describedby="game-instructions">
     <div className="game-board__rail">
@@ -131,13 +140,23 @@ export default function Board() {
       <div role="alert" aria-atomic="true">{feedback.error && <span key={feedback.id}>⚠ {feedback.text}</span>}</div>
       <div role="status" aria-atomic="true">{!feedback.error && <span key={feedback.id}>{feedback.text}</span>}</div>
     </div>
-    <p className={completeRuns.length === 8 ? 'game-victory' : 'sr-only'} role="status" aria-atomic="true">
+    {shows.outcome && !shows.active && <div className="game-outcome" role="status">
+      <p>{shows.outcome === 'won' ? 'You won! All eight spiders have fled.' : 'The spiders won! No solution remains for this position.'}</p>
+      {canUndo && <button onClick={undoLastTurn}>Undo last action</button>}
+      <button onClick={end}>New game</button>
+    </div>}
+    <p className="sr-only" role="status" aria-atomic="true">
       {completeRuns.length === 8 ? 'You won! All eight stacks complete. Every spider has fled.' : completeRuns.length > 0 ? `${completeRuns.length} of 8 stacks complete.` : ''}
     </p>
     <div className="game-board__scroll"><ol className="game-board__felt" aria-label="Tableau columns">
       {stacks.map((stack, column) => <Stack key={column} stack={stack} column={column} moving={!!selection}
         selectedDepth={selection?.column === column ? selection.depth : 0} onChoose={choose} />)}
     </ol></div>
-    <CompletedRuns runs={completeRuns} stacks={stacks} />
+    <CompletedRuns cardsGone={shows.cardsGone} runs={shows.homeRuns} stacks={stacks}
+      escaped={shows.outcome === 'lost' && shows.active?.kind !== 'battle'}
+      hiddenResidents={shows.active?.kind === 'battle' ? [shows.active.battle!.slot] : shows.outcome === 'lost' ? shows.remaining : []} />
+    {shows.active && <Suspense fallback={<button onClick={finishShow}>Skip animation</button>}>
+      <GameShow key={shows.active.id} request={shows.active} sound={sound} onDone={finishShow} onUndo={undoLastTurn} canUndo={canUndo} />
+    </Suspense>}
   </section>
 }

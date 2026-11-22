@@ -15,6 +15,7 @@ export class SpiderAgent {
   workProgress = 0
   workKind: 'trim' | 'spin' = 'trim'
   private target = new Vector3()
+  private inspectionUntil = 0
   private repair?: SilkThread
   private deadline = 2
   private waypoint = 0
@@ -54,6 +55,16 @@ export class SpiderAgent {
       return { anchor, from: anchor.point.clone(), target: anchor, swing: 0, stepping: false, cycle: -1 }
     })
     this.surface.occupy(id, this.feet.map(foot => foot.anchor))
+  }
+
+  investigate(point: Vector3) {
+    this.cancelWork()
+    this.repair = undefined
+    this.target.copy(point).setZ(0)
+    this.target.clampLength(0, Math.max(.3, this.surface.options.radius - this.size * 2.5))
+    this.inspectionUntil = this.surface.time + 6
+    this.activity = 'Exploring'
+    this.surface.disturb(point, 1.4)
   }
 
   get animationTime() { return this.surface.time - this.modeStart }
@@ -180,7 +191,14 @@ export class SpiderAgent {
     const cruisingSpeed = (temperament === 'Calm' ? 0.75 : temperament === 'Grumpy' ? 1.4 : 1.15) * this.size / 0.42 * urgency
     if (!this.isMoving) this.travelSpeed = 0
 
-    if (animation === 'Auto' && this.surface.options.tattered) {
+    if (now < this.inspectionUntil && (animation === 'Auto' || animation === 'Walk')) {
+      this.activity = 'Exploring'
+      if (this.moveTowardsTarget(delta, cruisingSpeed * 1.8)) {
+        this.activity = 'Waving'
+        this.inspectionUntil = Math.min(this.inspectionUntil, now + 1.2)
+      }
+      this.deadline = now + .3
+    } else if (animation === 'Auto' && this.surface.options.tattered) {
       this.updateRepairStory(now, delta, cruisingSpeed)
     } else if (animation === 'Auto' || animation === 'Walk') {
       if (this.work) {

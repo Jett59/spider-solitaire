@@ -5,6 +5,7 @@ export interface Game {
   stacks: Card[][]
   remainingCards: Card[]
   completeRuns: Card[][]
+  completeRunColumns?: number[]
 }
 export const emptyGame = (): Game => ({ started: false, stacks: [], remainingCards: [], completeRuns: [] })
 export const rank = (card: Card): number => card === '?' ? 0 : ({ J: 11, Q: 12, K: 13 }[card.slice(1)] ?? Number(card.slice(1)))
@@ -32,15 +33,16 @@ export function dealProblem(game: Game): string | null {
   return null
 }
 function copyGame(game: Game): Game {
-  return { ...game, stacks: game.stacks.map(stack => [...stack]), remainingCards: [...game.remainingCards], completeRuns: [...game.completeRuns] }
+  return { ...game, stacks: game.stacks.map(stack => [...stack]), remainingCards: [...game.remainingCards], completeRuns: [...game.completeRuns], completeRunColumns: [...(game.completeRunColumns ?? game.completeRuns.map(() => -1))] }
 }
 // Resolve all runs, including runs uncovered by another completion or a deal.
 function settle(game: Game): Game {
-  for (const stack of game.stacks) {
+  for (const [column, stack] of game.stacks.entries()) {
     while (true) {
       if (stack[0] === '?') stack[0] = game.remainingCards.shift()!
       if (stack.length < 13 || rank(stack[0]) !== 1 || !isRun(stack.slice(0, 13))) break
       game.completeRuns.push(stack.splice(0, 13))
+      game.completeRunColumns!.push(column)
     }
   }
   return game

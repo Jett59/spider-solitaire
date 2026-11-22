@@ -197,3 +197,21 @@ test('adjacent repairs take a direct route, with the centre reserved for complet
   assert.ok(travelledBetweenJobs && returnedHome && spider.isCelebrating)
   assert.ok(spider.position.length()<.02)
 })
+
+test('a web touch redirects its resident to investigate and then releases it', () => {
+  const web = new WebSurface({ radius: 4, spokes: 16, rings: 6 })
+  const spider = new SpiderAgent('visitor', web, .65)
+  const target = new Vector3(1, 1, 0)
+  spider.investigate(target)
+  assert.equal(spider.activity, 'Exploring')
+  let closest = Infinity
+  for (let frame = 0; frame < 100; frame++) {
+    web.tick(.05); spider.update('Auto', 'Curious')
+    closest = Math.min(closest, spider.position.distanceTo(target))
+  }
+  assert.ok(closest < .15)
+  spider.investigate(new Vector3(-1, 0, 0))
+  for (let frame = 0; frame < 100; frame++) { web.tick(.05); spider.update('Auto', 'Curious') }
+  assert.ok(spider.position.x < 0)
+  spider.dispose()
+})

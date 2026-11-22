@@ -33,6 +33,7 @@ test('group moves reveal exactly one source card and do not mutate input', () =>
 test('completion removes a run and reveals the card underneath', () => {
   const next = moveCards(game([['s1'], [...run.slice(1), '?']], ['h7']), 0, 1, 1)
   assert.deepEqual(next.completeRuns, [run])
+  assert.deepEqual(next.completeRunColumns, [1])
   assert.deepEqual(next.stacks, [[], ['h7']])
 })
 test('a deal consumes ten distinct cards and resolves multiple completed runs', () => {
@@ -40,6 +41,7 @@ test('a deal consumes ten distinct cards and resolves multiple completed runs', 
   const next = dealCards(state)
   assert.equal(next.remainingCards.length, 0)
   assert.equal(next.completeRuns.length, 2)
+  assert.deepEqual(next.completeRunColumns, [0, 1])
   assert.deepEqual(next.stacks.slice(2).map(s => s[0]), ['h2', 'h3', 'h4', 'h5', 'h6', 'h7', 'h8', 'h9'])
   assert.equal(state.remainingCards.length, 10)
 })

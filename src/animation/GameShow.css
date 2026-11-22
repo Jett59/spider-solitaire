@@ -1,0 +1,9 @@
+.game-show { position: fixed; inset: 0; z-index: 20; isolation: isolate; }
+.game-show--finale { background: #100a23a8; }
+.game-show__canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.game-show__controls { position: absolute; bottom: max(16px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); display: flex; justify-content: center; flex-wrap: wrap; gap: .5rem; width: max-content; max-width: 95vw; }
+.game-show__controls button, .show-skip { background: #2c203feb; border-color: #c9a4ea80; min-height: 44px; box-shadow: 0 3px 20px #0006; }
+.game-show__title { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); width: min(90vw, 600px); padding: 1rem; margin: 0; text-align: center; color: #fff1cd; background: #241832dc; border-radius: 14px; font-weight: 600; line-height: 1.5; }
+.game-outcome { margin: .7rem 1rem; padding: .8rem 1rem; border: 1px solid #b48bc0; border-radius: 10px; background: #30233e; }
+.game-outcome p { margin: 0 0 .6rem; }
+.game-outcome button { margin-right: .5rem; }

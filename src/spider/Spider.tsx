@@ -18,11 +18,13 @@ export interface SpiderProps {
   size?: number
   position?: [number, number]
   paused?: boolean
+  investigate?: { point: THREE.Vector3; serial: number }
+  onClick?: () => void
   onActivityChange?: (activity: SpiderActivity) => void
 }
 
 export function Spider({ colour = '#a477ed', mood = 'Curious', animation = 'Auto', size = 0.42,
-  position = [0, 0], paused = false, marking, alarm = 0, fleeing = false, variation = 0, onActivityChange }: SpiderProps) {
+  position = [0, 0], paused = false, marking, alarm = 0, fleeing = false, variation = 0, investigate, onClick, onActivityChange }: SpiderProps) {
   const surface = useWebSurface()
   const id = useId()
   const safeSize = Math.max(0.25, Math.min(size, surface.options.radius / 4))
@@ -55,6 +57,7 @@ export function Spider({ colour = '#a477ed', mood = 'Curious', animation = 'Auto
       }
     })
   }, [colour, model])
+  useEffect(() => { if (investigate) agent.investigate(investigate.point) }, [agent, investigate])
   useEffect(() => () => agent.dispose(), [agent])
   useEffect(() => () => { disposeSpiderModel(model.root); silkGeometry.dispose() }, [model, silkGeometry])
 
@@ -99,7 +102,7 @@ export function Spider({ colour = '#a477ed', mood = 'Curious', animation = 'Auto
     legs.forEach((leg, index) => {
       const foot = index === workingLeg && workPoint ? workPoint.clone() : agent.footPoint(index)
       if (jumping) foot.z += (jump.height + jump.tuck) * safeSize
-      if (animation === 'Wave' && index === 4) foot.z += (0.3 + Math.sin(time * 7) * 0.2) * safeSize
+      if ((animation === 'Wave' || agent.activity === 'Waving') && index === 4) foot.z += (0.3 + Math.sin(time * 7) * 0.2) * safeSize
       if (index === workingLeg) foot.z += Math.sin(time * 16) ** 2 * 0.045
       const local = foot.sub(model.root.position).divideScalar(safeSize)
       // Sparse webs and fast turns can place a silk target just outside a leg's reach.
@@ -126,7 +129,7 @@ export function Spider({ colour = '#a477ed', mood = 'Curious', animation = 'Auto
   }, -1)
 
   return <group ref={group} name={`Spider-${id}`}>
-    <primitive object={model.root} dispose={null} />
+    <primitive object={model.root} dispose={null} onClick={onClick ? (event: { stopPropagation: () => void }) => { event.stopPropagation(); onClick() } : undefined} />
     <lineSegments ref={silk} geometry={silkGeometry}>
       <lineBasicMaterial color="#f0e4ff" />
     </lineSegments>

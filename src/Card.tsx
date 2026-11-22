@@ -20,6 +20,6 @@ export default function CardDisplay({ card, label, selected, onClick, column, de
   </>
   const className = `playing-card ${'hd'.includes(card[0]) ? 'playing-card--red' : 'playing-card--black'}`
   return onClick ? <button type="button" className={className} aria-label={label ?? cardName(card)} aria-pressed={selected}
-    data-column={column} data-depth={depth} onClick={onClick}>{content}</button>
-    : <div className={className} role="img" aria-label={cardName(card)}>{content}</div>
+    data-column={column} data-depth={depth} data-card={card} onClick={onClick}>{content}</button>
+    : <div className={className} data-card={card} role="img" aria-label={cardName(card)}>{content}</div>
 }

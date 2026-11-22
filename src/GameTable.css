@@ -272,7 +272,10 @@ button.playing-card:focus-visible { outline: 3px solid #ffce6b; outline-offset: 
 .completed-runs__slots { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: .8rem; }
 .completion-slot { position: relative; min-width: 0; aspect-ratio: .75; border: 1px solid #a98ac92b; border-radius: .65rem; background: radial-gradient(ellipse at 50% 40%, #8061a526, transparent 72%); }
 .completion-slot__habitat { position: absolute; inset: 0; overflow: hidden; border-radius: inherit; }
-.home-scene { width: 100%; height: 100%; pointer-events: none; }
+.home-scene { width: 100%; height: 100%; cursor: pointer; }
+.home-scene__actions { position: absolute; z-index: 2; top: 0; left: 0; right: 0; }
+.home-scene__actions:not(:focus-within) { clip-path: inset(50%); width: 1px; height: 1px; overflow: hidden; }
+.home-scene__actions button { background: #30243e; color: #fff; border: 1px solid #d4b6ff; padding: .3rem; font-size: .7rem; }
 .home-scene-fallback { display: grid; height: 100%; place-items: center; font-size: .7rem; color: #cbb8dd; }
 .completion-slot__caption { position: absolute; bottom: 0; padding: .7rem 0 .4rem; width: 100%; text-align: center; line-height: 1.2; background: linear-gradient(transparent, #211a30e8 40%); pointer-events: none; }
 .completion-slot__caption span { display: block; color: var(--spider-colour); font-size: .8rem; font-weight: 650; }
