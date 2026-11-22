@@ -44,7 +44,7 @@ export function finaleShow(canvas: HTMLCanvasElement, kind: Finale, cue: (key: s
           while (rank < 13 && time >= fireworks.flights[rank * 8 + slot].prepareAt + .12) rank++
           if (rank < 13) ctx.drawImage(rocketImages[rank * 8 + slot], home.x, home.y, home.width, home.height)
         })
-        // All eight homes roll a card together; launches take turns across the table.
+        // Each home works at its own pace, with several rockets airborne together.
         for (let burst = 0; burst < FIREWORK_CARDS; burst++) {
           const rocket = fireworks.flights[burst]
           const { rollTime, flightTime, burstTime } = rocket
@@ -55,8 +55,8 @@ export function finaleShow(canvas: HTMLCanvasElement, kind: Finale, cue: (key: s
           const origin = source(burst)
           const flickX = origin.x + (burst % 2 ? 1 : -1) * Math.min(24, origin.width * .4)
           const flickY = origin.y - Math.min(65, origin.y * .2)
-          const x = width * (.12 + ((burst * .381) % .76))
-          const y = Math.max(35, Math.min(flickY - 100, height * (.12 + ((burst * .217) % .28))))
+          const x = width * rocket.targetX
+          const y = Math.max(35, Math.min(flickY - 100, height * rocket.targetY))
           const morph = smooth((preparationAge - .35) / (rollTime - .35))
           if (age < rollTime + flightTime) {
             const flight = clamp((age - rollTime) / flightTime)

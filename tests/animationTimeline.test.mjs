@@ -67,25 +67,28 @@ test('gathering stays over the completed column when the Ace came from the left'
 })
 
 
-test('randomized pile rhythms preserve rank order, simultaneous launches, and the final Ace ending', async () => {
+test('independent pile rhythms overlap many rockets while preserving rank order and the final Ace ending', async () => {
   const { createFireworksPlan } = await import('../src/animation/fireworksPlan.ts')
   const { rocketCard } = await import('../src/animation/timeline.ts')
   for (let seed = 1; seed <= 20; seed++) {
     let state = seed
     const random = () => { state = (state * 1664525 + 1013904223) >>> 0; return state / 2 ** 32 }
     const { flights, duration } = createFireworksPlan(random)
-    const volleys = new Map()
     assert.equal(flights.length, 104)
     for (const rocket of flights) {
-      volleys.set(rocket.launchAt, (volleys.get(rocket.launchAt) ?? 0) + 1)
       assert.ok(rocket.prepareAt >= 0)
       assert.ok(rocket.prepareAt + rocket.rollTime <= rocket.launchAt + 1e-9)
     }
-    for (const count of volleys.values()) assert.ok(count >= 3)
+    const peakFlights = Math.max(...flights.map(({ launchAt }) => flights.filter(rocket =>
+      rocket.launchAt <= launchAt && rocket.launchAt + rocket.flightTime > launchAt).length))
+    assert.ok(peakFlights >= 6, `expected overlapping launches, got ${peakFlights}`)
+    assert.ok(new Set(flights.map(rocket => rocket.flightTime)).size > 90)
+    assert.ok(new Set(flights.map(rocket => rocket.targetX)).size > 90)
     assert.ok(new Set(flights.map(rocket => rocket.rollTime)).size > 8)
     for (let home = 0; home < 8; home++) {
       const pile = Array.from({ length: 13 }, (_, rank) => flights[rank * 8 + home])
-      assert.ok(pile.every((rocket, rank) => rank === 0 || rocket.launchAt > pile[rank - 1].launchAt))
+      assert.ok(pile.every((rocket, rank) => rank === 0 || rocket.prepareAt > pile[rank - 1].launchAt))
+      assert.ok(new Set(pile.slice(1).map((rocket, rank) => rocket.launchAt - pile[rank].launchAt)).size > 8)
       assert.deepEqual(pile.map(rocket => rocketCard(rocket.index, 'h')),
         ['hK','hQ','hJ','h10','h9','h8','h7','h6','h5','h4','h3','h2','h1'])
     }

@@ -46,8 +46,8 @@ export function playGameSound(kind: GameSound, duration = 1.45): () => void {
         vibrato.gain.linearRampToValueAtTime(95, now + duration)
         tremolo.connect(vibrato); vibrato.connect(whistle.frequency)
         gain.gain.setValueAtTime(.0001, now)
-        gain.gain.exponentialRampToValueAtTime(.032, now + .12)
-        gain.gain.exponentialRampToValueAtTime(.045, now + duration * .7)
+        gain.gain.exponentialRampToValueAtTime(.0008, now + .12)
+        gain.gain.exponentialRampToValueAtTime(.0011, now + duration * .7)
         gain.gain.exponentialRampToValueAtTime(.0001, now + duration)
         whistle.connect(gain); gain.connect(audio.destination)
         whistle.onended = () => { whistle.disconnect(); gain.disconnect(); vibrato.disconnect(); tremolo.disconnect() }
