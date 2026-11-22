@@ -1,25 +1,35 @@
-import spiderIcon from './assets/spider.svg'
+import { lazy, Suspense } from 'react'
 import './App.css'
 import Board from './Board'
 import { useGameState } from './GameState'
 
-function App() {
-  const { start, started } = useGameState();
+const SpiderPreview = lazy(() => import('./spider/SpiderPreview'))
 
-  return (
-    <div>
-      <div>
-        <img src={spiderIcon} className="logo" alt="A round purple spider sitting on its web" />
-      </div>
-      <h1>Spider Solitaire!</h1>
-      <div>
-        <button onClick={() => start(1)} disabled={started}>Start with 1 suit</button>
-        <button onClick={() => start(2)} disabled={started}>Start with 2 suits</button>
-        <button onClick={() => start(4)} disabled={started}>Start with 4 suits</button>
-      </div>
-      {started && <Board />}
-    </div>
-  )
+function App() {
+  const { start, started, end } = useGameState()
+
+  if (started) {
+    return <main className="game-screen">
+      <header className="game-header">
+        <h1>Spider Solitaire</h1>
+        <button onClick={end}>Back to web</button>
+      </header>
+      <Board />
+    </main>
+  }
+
+  return <>
+    <Suspense fallback={<p className="scene-loading">Spinning a little silk…</p>}>
+      <SpiderPreview />
+    </Suspense>
+    <nav className="start-options" aria-label="New game">
+      <span>New game</span>
+      {[1, 2, 4].map(suits => <button key={suits} onClick={() => start(suits)}
+        aria-label={`Start with ${suits} ${suits === 1 ? 'suit' : 'suits'}`}>
+        {suits} {suits === 1 ? 'suit' : 'suits'}
+      </button>)}
+    </nav>
+  </>
 }
 
 export default App
