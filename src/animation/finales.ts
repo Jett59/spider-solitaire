@@ -1,4 +1,5 @@
-import { butterflyPairs, butterflyY, butterflyDuration, PAINT_INTERVAL, PAINT_FLIGHT, PAINT_DURATION } from './cardFinalePlan'
+import { butterflyPairs, PAINT_INTERVAL, PAINT_FLIGHT, PAINT_DURATION } from './cardFinalePlan'
+import { createButterflyFlight, butterflyPose } from './butterflyFlight'
 import { createBurst, createBurstRenderer } from './fireworkBurst'
 import { createFireworksPlan } from './fireworksPlan'
 import { cardArtwork } from './cardArtwork'
@@ -14,6 +15,16 @@ export function finaleShow(canvas: HTMLCanvasElement, kind: Finale, cue: (key: s
   const source = (i: number) => { const home = sources[i % sources.length]; return { x: home.x + home.width / 2, y: home.y + home.height / 2, width: home.width } }
   const rocketImages = Array.from({ length: FIREWORK_CARDS }, (_, index) =>
     cardArtwork(rocketCard(index, sources[index % sources.length].card?.[0] ?? 's')))
+  // Land on real visible card/toolbar edges, never an arbitrary point in empty air.
+  const perches = Array.from(document.querySelectorAll('.game-board__rail, .playing-card, .animation-review__playback')).filter(element => !element.closest('.completion-slot')).flatMap(element => {
+    const r = element.getBoundingClientRect()
+    return [.2, .5, .8].map(t => ({ x: r.x + r.width * t, y: r.y - 27 }))
+  }).filter(point => point.x > 35 && point.x < width - 35 && point.y > 80 && point.y < height - 80)
+  const flights = butterflyPairs.map(pair => {
+    const origins = pair.cards.map(card => source(card))
+    return createButterflyFlight({ x: (origins[0].x + origins[1].x) / 2, y: (origins[0].y + origins[1].y) / 2 }, width, height, perches)
+  })
+  const butterflyEnd = Math.max(...flights.map((flight, index) => butterflyPairs[index].start + flight.duration)) + .2
   // Replace the stationary King faces with the remaining cards during the show.
   const piles = Array.from(document.querySelectorAll<HTMLElement>('.completion-slot__run'))
   const visibility = piles.map(pile => pile.style.visibility)
@@ -23,7 +34,7 @@ export function finaleShow(canvas: HTMLCanvasElement, kind: Finale, cue: (key: s
   const drawBurst = createBurstRenderer()
   let previousStamp = -1
   return {
-    duration: kind === 'fireworks' ? fireworks.duration : kind === 'butterflies' ? butterflyDuration(height) : PAINT_DURATION,
+    duration: kind === 'fireworks' ? fireworks.duration : kind === 'butterflies' ? butterflyEnd : PAINT_DURATION,
     frame(time: number) {
       cue('win', 'win')
       if (kind !== 'painting') ctx.clearRect(0, 0, width, height)
@@ -123,20 +134,20 @@ export function finaleShow(canvas: HTMLCanvasElement, kind: Finale, cue: (key: s
         })
         butterflyPairs.forEach((pair, index) => {
           const age = time - pair.start
-          if (age < 0) return
+          if (age < 0 || age > flights[index].duration) return
           const origins = pair.cards.map(card => source(card))
           const opening = smooth(age / .8)
-          const centerX = (origins[0].x + origins[1].x) / 2 + Math.sin(age * 1.3 + index) * age * 18
-          const centerY = butterflyY((origins[0].y + origins[1].y) / 2, age)
-          if (index % 4 === 0) cue(`flutter-${index}-${Math.floor(age)}`, 'flutter')
+          const pose = butterflyPose(flights[index], age)
+          const centerX = pose.x, centerY = pose.y
+          if (!pose.resting && index % 4 === 0) cue(`flutter-${index}-${Math.floor(age)}`, 'flutter')
           pair.cards.forEach((card, wing) => {
             const origin = origins[wing], side = wing ? 1 : -1
             const cardWidth = origin.width * (1 - opening) + Math.min(origin.width, 38) * opening
-            const flap = 1 - opening + opening * (.15 + .85 * Math.abs(Math.cos(age * 9 + index)))
+            const flap = 1 - opening + opening * pose.flap
             const px = origin.x + (centerX - origin.x) * opening
             const py = origin.y + (centerY - origin.y) * opening
             ctx.save(); ctx.translate(px, py)
-            ctx.rotate(Math.sin(age * 1.5 + index) * .2)
+            ctx.rotate(pose.tilt)
             ctx.scale(flap, 1)
             const wingX = -cardWidth / 2 * (1 - opening) + (side < 0 ? -cardWidth : 0) * opening
             ctx.drawImage(rocketImages[card], wingX, -cardWidth * .7, cardWidth, cardWidth * 1.4)

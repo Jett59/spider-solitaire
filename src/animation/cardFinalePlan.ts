@@ -11,7 +11,3 @@ export const butterflyPairs: ButterflyPair[] = [
 export const PAINT_INTERVAL = .13
 export const PAINT_FLIGHT = 3.2
 export const PAINT_DURATION = 103 * PAINT_INTERVAL + PAINT_FLIGHT
-export const butterflyY = (origin: number, age: number) => origin - age * 30 - age * age * 20
-export function butterflyDuration(height: number) {
-  return Math.max(...butterflyPairs.map(pair => pair.start)) + (Math.sqrt(900 + 80 * (height + 200)) - 30) / 40 + .2
-}

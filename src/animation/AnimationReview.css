@@ -13,3 +13,4 @@
 .animation-review button { min-height: 40px; }
 .animation-review > .spider-preview { height: calc(100dvh - 130px); }
 @media(max-width:600px) { .animation-review__header { padding: .5rem; } .animation-review__header nav { gap: .25rem; } .animation-review__header button { padding: .45rem .6rem; font-size: .8rem; } .animation-review__timeline { font-size: .8rem; } }
+.animation-review__canvas > canvas { width: 100%; height: 100%; display: block; }
