@@ -146,16 +146,18 @@ export function finaleShow(canvas: HTMLCanvasElement, kind: Finale, cue: (key: s
       } else {
         // Each physical card paints its own trail, at its captured stack size.
         const stamp = Math.floor(time * 24)
-        if (stamp !== previousStamp) {
-          previousStamp = stamp
+        if (stamp < previousStamp) { ctx.clearRect(0, 0, width, height); previousStamp = -1 }
+        for (let nextStamp = previousStamp + 1; nextStamp <= stamp; nextStamp++) {
+          const sampleTime = nextStamp / 24
+          previousStamp = nextStamp
           sources.forEach((home, slot) => {
             let rank = 0
-            while (rank < 13 && time >= (rank * 8 + slot) * PAINT_INTERVAL) rank++
+            while (rank < 13 && sampleTime >= (rank * 8 + slot) * PAINT_INTERVAL) rank++
             ctx.clearRect(home.x, home.y, home.width, home.height)
             if (rank < 13) ctx.drawImage(rocketImages[rank * 8 + slot], home.x, home.y, home.width, home.height)
           })
           for (let card = 0; card < 104; card++) {
-            const age = time - card * PAINT_INTERVAL
+            const age = sampleTime - card * PAINT_INTERVAL
             if (age < 0 || age > PAINT_FLIGHT) continue
             const home = sources[card % sources.length], origin = source(card)
             const travelWidth = Math.max(1, width - home.width)

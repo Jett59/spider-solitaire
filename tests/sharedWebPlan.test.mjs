@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { sharedWebPlan, passingHeights } from '../src/animation/sharedWebPlan.ts'
+import { sharedWebPlan, passingHeights, WEB_RINGS, WEB_SPOKES } from '../src/animation/sharedWebPlan.ts'
 
 test('every radial and ring strand is woven exactly once for every survivor count', () => {
   for (let residents = 1; residents <= 8; residents++) {
@@ -9,7 +9,7 @@ test('every radial and ring strand is woven exactly once for every survivor coun
     const parks=new Set()
     for(const route of routes) {
       parks.add(route.at(-1).node)
-      assert.equal(route[0].node,route.at(-1).node)
+      assert.notEqual(route[0].node,route.at(-1).node)
       for(let i=1;i<route.length;i++) {
         const a=route[i-1].node,b=route[i].node
         assert.notEqual(a,b)
@@ -21,7 +21,7 @@ test('every radial and ring strand is woven exactly once for every survivor coun
       }
     }
     assert.equal(parks.size,residents)
-    assert.equal(strands.size,72)
+    assert.equal(strands.size,WEB_RINGS * WEB_SPOKES * 2)
     assert.equal(junctions.size,nodes.length)
   }
 })
@@ -34,4 +34,14 @@ test('passing spiders have leg clearance even when several meet at a junction', 
     assert.ok(Math.hypot(a.x-b.x,a.y-b.y,heights[i]-heights[j])+1e-8 >= (a.size+b.size)*3.2)
   }
   assert.deepEqual(passingHeights([{x:0,y:0,size:10},{x:100,y:0,size:10}]),[0,0])
+})
+
+test('celebration positions vary across the interior while staying on completed silk', () => {
+  const low=sharedWebPlan(8,()=>.15), high=sharedWebPlan(8,()=>.85)
+  assert.notDeepEqual(low.routes.map(route=>route.at(-1).node),high.routes.map(route=>route.at(-1).node))
+  for(const plan of [low,high]) for(const route of plan.routes) {
+    const point=plan.nodes[route.at(-1).node]
+    assert.ok(Math.hypot(point.x,point.y)>.25)
+    assert.ok(Math.hypot(point.x,point.y)<.95)
+  }
 })

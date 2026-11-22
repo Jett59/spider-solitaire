@@ -1,0 +1,15 @@
+.animation-review { position: fixed; inset: 0; z-index: 30; background: radial-gradient(ellipse at 50% 45%, #30223f, #100c20 75%); overflow: auto; }
+.animation-review__header { position: relative; z-index: 2; display: flex; flex-wrap: wrap; align-items: center; gap: .65rem; padding: 1rem; background: #171123e8; }
+.animation-review__header h1 { font-size: 1.2rem; margin: 0 auto 0 0; }
+.animation-review__header nav { display: flex; flex-wrap: wrap; gap: .4rem; width: 100%; }
+.animation-review button[aria-pressed=true] { background: #614078; border-color: #d9b5f6; }
+.animation-review__canvas { position: fixed; inset: 0; pointer-events: none; }
+.animation-review__playback { position: fixed; bottom: 0; left: 0; right: 0; z-index: 2; padding: .8rem max(1rem, env(safe-area-inset-left)); background: #171123ed; border-top: 1px solid #735881; }
+.animation-review__timeline { display: flex; align-items: center; gap: .7rem; }
+.animation-review__timeline input { flex: 1; min-width: 50px; accent-color: #d3a5f5; }
+.animation-review__timeline output { min-width: 110px; font-variant-numeric: tabular-nums; }
+.animation-review__buttons { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin-top: .6rem; }
+.animation-review select { padding: .5rem; color: inherit; background: #30223f; border: 1px solid #735881; border-radius: 6px; }
+.animation-review button { min-height: 40px; }
+.animation-review > .spider-preview { height: calc(100dvh - 130px); }
+@media(max-width:600px) { .animation-review__header { padding: .5rem; } .animation-review__header nav { gap: .25rem; } .animation-review__header button { padding: .45rem .6rem; font-size: .8rem; } .animation-review__timeline { font-size: .8rem; } }
