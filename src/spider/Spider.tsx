@@ -9,6 +9,10 @@ import { disposeSpiderModel } from './disposeSpiderModel'
 
 export interface SpiderProps {
   colour?: string
+  marking?: 'spots' | 'stripe' | 'chevron'
+  alarm?: 0 | 1 | 2
+  fleeing?: boolean
+  variation?: number
   mood?: SpiderTemperament
   animation?: SpiderAnimation
   size?: number
@@ -18,13 +22,13 @@ export interface SpiderProps {
 }
 
 export function Spider({ colour = '#a477ed', mood = 'Curious', animation = 'Auto', size = 0.42,
-  position = [0, 0], paused = false, onActivityChange }: SpiderProps) {
+  position = [0, 0], paused = false, marking, alarm = 0, fleeing = false, variation = 0, onActivityChange }: SpiderProps) {
   const surface = useWebSurface()
   const id = useId()
-  const safeSize = Math.max(0.25, Math.min(size, surface.options.radius / 6))
+  const safeSize = Math.max(0.25, Math.min(size, surface.options.radius / 4))
   const [x, y] = position
-  const agent = useMemo(() => new SpiderAgent(id, surface, safeSize, [x, y]), [id, surface, safeSize, x, y])
-  const model = useMemo(() => createSpider({ includeWeb: false }), [])
+  const agent = useMemo(() => new SpiderAgent(id, surface, safeSize, [x, y], variation), [id, surface, safeSize, x, y, variation])
+  const model = useMemo(() => createSpider({ includeWeb: false, marking }), [marking])
   const body = useMemo(() => model.root.getObjectByName('Body')!, [model])
   const joints = useMemo(() => legs.map(leg => ({
     upper: model.root.getObjectByName(`${leg.name}Upper`)!,
@@ -34,11 +38,15 @@ export function Spider({ colour = '#a477ed', mood = 'Curious', animation = 'Auto
   const silk = useRef<THREE.LineSegments>(null)
   const activity = useRef<SpiderActivity | null>(null)
   const previousJump = useRef(0)
+  const escapeTime = useRef(0)
+  const group = useRef<THREE.Group>(null)
 
   useEffect(() => {
     const base = new THREE.Color(colour)
     model.root.traverse(object => {
       if (object instanceof THREE.Mesh && object.material instanceof THREE.MeshStandardMaterial) {
+        object.castShadow = true
+        object.receiveShadow = true
         const material = object.material
         // The two purple materials are shared by all limbs and the face.
         if (!material.userData.spiderRole && material.color.getHexString() === 'a477ed') material.userData.spiderRole = 'body'
@@ -50,8 +58,13 @@ export function Spider({ colour = '#a477ed', mood = 'Curious', animation = 'Auto
   useEffect(() => () => agent.dispose(), [agent])
   useEffect(() => () => { disposeSpiderModel(model.root); silkGeometry.dispose() }, [model, silkGeometry])
 
-  useFrame(() => {
-    if (!paused) agent.update(animation, mood)
+  useFrame((_, delta) => {
+    if (!paused) agent.update(alarm || fleeing ? 'Walk' : animation, mood, fleeing ? 3 : alarm === 2 ? 2.3 : alarm ? 1.6 : 1)
+    escapeTime.current = fleeing ? Math.min(1, escapeTime.current + (paused ? 1 : Math.min(delta, .05) * 1.5)) : 0
+    if (group.current) {
+      group.current.visible = escapeTime.current < 1
+      group.current.position.set(escapeTime.current ** 2 * 7, -(escapeTime.current ** 2) * 7, 0)
+    }
     const time = surface.time
     if (activity.current !== agent.activity) {
       activity.current = agent.activity
@@ -64,9 +77,9 @@ export function Spider({ colour = '#a477ed', mood = 'Curious', animation = 'Auto
     const ground = surface.height(agent.position.x, agent.position.y)
     model.root.position.set(agent.position.x, agent.position.y, ground + 0.9 * safeSize)
     model.root.scale.setScalar(safeSize)
-    body.position.set(0, 0, jump.height)
-    model.root.getObjectByName('Mouth')!.scale.y = agent.isFrowning ? -1 : 1
-    const eyeScale = agent.isFrowning || mood === 'Grumpy' ? 0.65 : mood === 'Calm' ? 0.83 : 1
+    body.position.set(alarm && !paused ? Math.sin(time * 55) * .025 * alarm : 0, 0, jump.height + (alarm && !paused ? Math.sin(time * 39) * .025 * alarm : 0))
+    model.root.getObjectByName('Mouth')!.scale.y = agent.isFrowning || mood === 'Grumpy' || alarm ? -1 : 1
+    const eyeScale = alarm ? 1.25 : agent.isFrowning || mood === 'Grumpy' ? 0.65 : mood === 'Calm' ? 0.83 : 1
     const blink = time % 4 > 3.75 ? 0.12 : 1
     for (const side of ['LeftEye', 'RightEye']) model.root.getObjectByName(side)!.scale.y = eyeScale * blink
 
@@ -112,7 +125,7 @@ export function Spider({ colour = '#a477ed', mood = 'Curious', animation = 'Auto
     }
   }, -1)
 
-  return <group name={`Spider-${id}`}>
+  return <group ref={group} name={`Spider-${id}`}>
     <primitive object={model.root} dispose={null} />
     <lineSegments ref={silk} geometry={silkGeometry}>
       <lineBasicMaterial color="#f0e4ff" />

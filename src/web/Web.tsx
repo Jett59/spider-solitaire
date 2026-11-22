@@ -5,6 +5,7 @@ import { WebSurface } from './webSurface'
 import { WebContext } from './webContext'
 
 export interface WebProps {
+  surface?: WebSurface
   radius?: number
   spokes?: number
   rings?: number
@@ -14,13 +15,13 @@ export interface WebProps {
   children?: ReactNode
 }
 
-export function Web({ radius = 5, spokes = 18, rings = 10, colour = '#c9c1e4', tattered = false, paused = false, children }: WebProps) {
-  const surface = useMemo(() => new WebSurface({ radius, spokes, rings, tattered }), [radius, spokes, rings, tattered])
+export function Web({ radius = 5, spokes = 18, rings = 10, colour = '#c9c1e4', tattered = false, paused = false, children, surface: suppliedSurface }: WebProps) {
+  const surface = useMemo(() => suppliedSurface ?? new WebSurface({ radius, spokes, rings, tattered }), [suppliedSurface, radius, spokes, rings, tattered])
   const geometry = useMemo(() => {
     const count = surface.threads.reduce((sum, thread) => sum + (thread.points.length - 1) * 2 + 24, 0)
     const result = new THREE.BufferGeometry()
     result.setAttribute('position', new THREE.BufferAttribute(new Float32Array(count * 3), 3).setUsage(THREE.DynamicDrawUsage))
-    result.boundingSphere = new THREE.Sphere(new THREE.Vector3(), surface.options.radius + 1)
+    result.boundingSphere = new THREE.Sphere(new THREE.Vector3(), Math.max(...surface.threads.flatMap(thread => thread.points.map(point => point.length()))) + 1)
     return result
   }, [surface])
   const lines = useRef<THREE.LineSegments>(null)

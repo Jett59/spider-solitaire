@@ -7,7 +7,7 @@ import {
 export { spiderMoods, type SpiderMood } from './spiderGait'
 
 /** Named mesh pivots and standard animation clips remain portable through glTF. */
-export function createSpider({ colour = '#a477ed', includeWeb = true } = {}) {
+export function createSpider({ colour = '#a477ed', includeWeb = true, marking }: { colour?: string; includeWeb?: boolean; marking?: 'spots' | 'stripe' | 'chevron' } = {}) {
   const root = new THREE.Group()
   root.name = 'Spider'
   const body = new THREE.Group()
@@ -35,6 +35,21 @@ export function createSpider({ colour = '#a477ed', includeWeb = true } = {}) {
   }
 
   orb(body, purple, [0, 0.48, -0.12], [0.94, 1.02, 0.73])
+  if (marking) {
+    const markings = new THREE.MeshStandardMaterial({ color: '#d9c8ac', roughness: .65 })
+    if (marking === 'spots') {
+      for (const [x, y] of [[-.3, .65], [.3, .65], [0, 1]]) orb(body, markings, [x, y, .57], [.13, .14, .045])
+    } else {
+      const stripe = orb(body, markings, [0, .65, .6], [.12, .55, .045])
+      if (marking === 'chevron') {
+        stripe.scale.set(.1, .3, .045)
+        stripe.rotation.z = -.7
+        stripe.position.x = -.18
+        const other = orb(body, markings, [.18, .65, .6], [.1, .3, .045])
+        other.rotation.z = .7
+      }
+    }
+  }
   const head = orb(body, face, [0, -0.44, 0.45], [0.72, 0.61, 0.58])
   head.name = 'Head'
   for (const side of [-1, 1]) {

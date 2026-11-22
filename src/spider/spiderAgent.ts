@@ -37,13 +37,14 @@ export class SpiderAgent {
   readonly id: string
   readonly surface: WebSurface
   readonly size: number
-  constructor(id: string, surface: WebSurface, size: number, start: [number, number] = [0, 0]) {
+  constructor(id: string, surface: WebSurface, size: number, start: [number, number] = [0, 0], variation = 0) {
     this.id = id
     this.surface = surface
     this.size = size
     this.lastTime = surface.time
     this.modeStart = surface.time
-    this.deadline = surface.time + 1.2
+    this.deadline = surface.time + 1.2 + variation * .27
+    this.waypoint = variation
     const limit = Math.max(0, surface.options.radius - size * 2.8)
     this.position = new Vector3(start[0], start[1], 0)
     if (this.position.length() > limit) this.position.setLength(limit)
@@ -162,7 +163,7 @@ export class SpiderAgent {
     }
   }
 
-  update(animation: SpiderAnimation, temperament: SpiderTemperament) {
+  update(animation: SpiderAnimation, temperament: SpiderTemperament, urgency = 1) {
     const now = this.surface.time
     const delta = Math.min(0.05, Math.max(0, now - this.lastTime))
     this.lastTime = now
@@ -176,7 +177,7 @@ export class SpiderAgent {
       this.activity = 'Resting'
       this.target.copy(this.position)
     }
-    const cruisingSpeed = (temperament === 'Calm' ? 0.75 : temperament === 'Grumpy' ? 1.4 : 1.15) * this.size / 0.42
+    const cruisingSpeed = (temperament === 'Calm' ? 0.75 : temperament === 'Grumpy' ? 1.4 : 1.15) * this.size / 0.42 * urgency
     if (!this.isMoving) this.travelSpeed = 0
 
     if (animation === 'Auto' && this.surface.options.tattered) {
@@ -241,7 +242,7 @@ export class SpiderAgent {
       this.activity = animation === 'Wave' ? 'Waving' : animation === 'Celebrate' ? 'Celebrating' : 'Resting'
     }
 
-    const cadence = 1.4 + 3.8 * Math.min(1, this.travelSpeed / cruisingSpeed)
+    const cadence = (1.4 + 3.8 * Math.min(1, this.travelSpeed / cruisingSpeed)) * urgency
     if (this.isMoving) this.gaitPhase += delta * cadence
     for (let index = 0; index < legs.length; index++) {
       const leg = legs[index]
